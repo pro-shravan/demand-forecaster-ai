@@ -1,8 +1,8 @@
 import { Link, useRouterState, useNavigate } from "@tanstack/react-router";
-import { type ReactNode, useState } from "react";
+import { type ReactNode, useState, useEffect } from "react";
 import {
   LayoutDashboard, Upload, Package, Brain, FileText, BarChart3,
-  User, Settings, Sparkles, LogOut, Bell, Menu, X, Search,
+  User, Settings, Sparkles, LogOut, Bell, Menu, X, Search, Shield,
 } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { cn } from "@/lib/utils";
@@ -24,9 +24,22 @@ const bottomNav = [
 
 export function AppShell({ children }: { children: ReactNode }) {
   const [open, setOpen] = useState(false);
+  const [isSuperAdmin, setIsSuperAdmin] = useState(false);
+
+  useEffect(() => {
+    async function checkAdmin() {
+      const { data: { user } } = await supabase.auth.getUser();
+      if (user) {
+        const { data } = await supabase.rpc("has_role", { _user_id: user.id, _role: "super_admin" });
+        setIsSuperAdmin(!!data);
+      }
+    }
+    checkAdmin();
+  }, []);
+
   return (
     <div className="min-h-screen bg-background flex">
-      <Sidebar mobileOpen={open} onClose={() => setOpen(false)} />
+      <Sidebar mobileOpen={open} onClose={() => setOpen(false)} isSuperAdmin={isSuperAdmin} />
       <div className="flex-1 flex flex-col min-w-0 lg:ml-72">
         <TopBar onMenu={() => setOpen(true)} />
         <main className="flex-1 p-6 md:p-8 lg:p-10">{children}</main>
@@ -35,7 +48,7 @@ export function AppShell({ children }: { children: ReactNode }) {
   );
 }
 
-function Sidebar({ mobileOpen, onClose }: { mobileOpen: boolean; onClose: () => void }) {
+function Sidebar({ mobileOpen, onClose, isSuperAdmin }: { mobileOpen: boolean; onClose: () => void; isSuperAdmin: boolean }) {
   const pathname = useRouterState({ select: (s) => s.location.pathname });
   const navigate = useNavigate();
 
@@ -82,6 +95,20 @@ function Sidebar({ mobileOpen, onClose }: { mobileOpen: boolean; onClose: () => 
               </Link>
             );
           })}
+
+          {isSuperAdmin && (
+            <Link
+              to="/admin"
+              onClick={onClose}
+              className={cn(
+                "flex items-center gap-3 rounded-2xl px-3 py-2.5 text-sm transition",
+                pathname === "/admin" ? "bg-sidebar-accent text-foreground font-medium" : "text-muted-foreground hover:text-foreground hover:bg-sidebar-accent/50"
+              )}
+            >
+              <Shield className={cn("size-4", pathname === "/admin" && "text-primary")} />
+              Super Admin
+            </Link>
+          )}
         </nav>
 
         <div className="pt-4 border-t border-sidebar-border space-y-1">

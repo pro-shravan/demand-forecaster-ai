@@ -71,9 +71,32 @@ export type Database = {
         }
         Returns: boolean
       }
+      get_all_users: {
+        Args: Record<string, never>
+        Returns: {
+          id: string
+          email: string
+          created_at: string
+          full_name: string | null
+          role: Database["public"]["Enums"]["app_role"] | null
+        }[]
+      }
+      update_user_role: {
+        Args: {
+          _user_id: string
+          _new_role: Database["public"]["Enums"]["app_role"]
+        }
+        Returns: undefined
+      }
+      admin_delete_user: {
+        Args: {
+          _user_id: string
+        }
+        Returns: undefined
+      }
     }
     Enums: {
-      app_role: "admin" | "manager" | "analyst"
+      app_role: "admin" | "manager" | "analyst" | "driver" | "customer" | "super_admin"
     }
     CompositeTypes: {
       [_ in never]: never
@@ -201,7 +224,7 @@ export type CompositeTypes<
 export const Constants = {
   public: {
     Enums: {
-      app_role: ["admin", "manager", "analyst"],
+      app_role: ["admin", "manager", "analyst", "driver", "customer", "super_admin"],
     },
   },
 } as const
